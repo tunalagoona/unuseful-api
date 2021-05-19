@@ -1,9 +1,9 @@
 import time
 import logging
 from contextlib import closing
-from typing import Optional, List
+from typing import Optional
 
-from requests import get, codes, Session
+from requests import codes, Session
 import json
 from requests.adapters import HTTPAdapter
 from tqdm import tqdm
@@ -39,7 +39,7 @@ class FactsProcessor:
             logger.info(f"Could not connect to Random Useless Facts. Status code is {response.status_code}.")
             return None
 
-    def save_random_facts(self, url):
+    def save_random_facts(self, url, facts_quantity=1000, batch_size=50, sleep_time=1):
         with closing(DB()) as db:
             with db:
                 db.init_db()
@@ -47,8 +47,6 @@ class FactsProcessor:
 
         counter = 0
         records = []
-
-        facts_quantity, batch_size, sleep_time = 1000, 5, 1
 
         pbar = tqdm(total=facts_quantity)
         pbar.set_description("Downloading random facts")
@@ -61,6 +59,10 @@ class FactsProcessor:
                     time.sleep(sleep_time)
                     counter += 1
                     pbar.update(1)
+
+                with closing(DB()) as db:
+                    with db:
+                        db.update_counter(counter)
 
             with closing(DB()) as db:
                 with db:
