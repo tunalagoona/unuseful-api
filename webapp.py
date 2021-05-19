@@ -2,9 +2,10 @@ import json
 import os
 from contextlib import closing
 from typing import List
-
-from flask import Flask
 import logging
+
+from flask import Flask, request
+from googletrans import Translator
 
 from database import DB
 
@@ -40,8 +41,16 @@ def fact(fact_id) -> str:
             "url": fact_obj["source_url"],
             "language": fact_obj["language"]
         }
-        result = json.dumps(obj)
-        return result
+
+        language = request.args.get('lang')
+
+        if language:
+            obj["language"] = language
+
+            translator = Translator()
+            t = translator.translate(obj["text"], dest=language, src='en')
+            obj["text"] = t.text
+        return str(obj)
     else:
         return ""
 
