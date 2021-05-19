@@ -21,9 +21,17 @@ paths:
       responses:
         200:
           description: OK
+  /status:
+    get:
+      summary: Returns the application status.
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
   /facts/{fact_id}:
     get:
-      summary: Returns a fact by id.
+      summary: Returns the fact by its id.
       parameters:
         - in: path
           name: fact_id
