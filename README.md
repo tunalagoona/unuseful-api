@@ -6,8 +6,10 @@ A pretty useless API
 
 ### Get Started
 
-Fork the directory and install the dependencies:
+Clone the project, set up virtual environment, and install the dependencies:
 ```
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -22,19 +24,16 @@ export FLASK_APP=webapp
 flask run -h localhost -p 8080
 ```
 
-3. To test the API from the browser, enter http://localhost:8080 with the following credentials: `user = 'admin', password = 'QWxhZGRpb'`    
+3. Finally, to run the API from Swagger Editor, go to [Swagger Editor](https://editor.swagger.io/) and past the content of the swagger.yaml file to the console.  
 
-   
-   Available endpoints:
+Use the following credentials to authorize: `user = 'admin', password = 'QWxhZGRpb'`
+
+
+Available endpoints:
 ```
 /status
 /facts
 /facts/<fact_id>
-# you can also specify lang query parameter to get the response in the desired language
+# you can specify lang query parameter to get the response in the specified language
 # for example, http://localhost:8080/facts/0160a21a-a0f0-4ad7-923a-41ad1d0ace0e?lang=ru
 ```
-
-
-4. Finally, to run the API from Swagger Editor, go to [Swagger Editor](https://editor.swagger.io/) and past the content of the swagger.yaml file to the console.
-
-
