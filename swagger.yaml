@@ -1,0 +1,42 @@
+swagger: "2.0"
+info:
+  title: Unuseful API
+  description: API description in Markdown.
+  version: 1.0.0
+host: "localhost:8080"
+basePath: /
+schemes:
+  - http
+securityDefinitions:
+  basicAuth:
+    type: basic
+security:
+  - basicAuth: []
+paths:
+  /facts:
+    get:
+      summary: Returns a list of ids of all random facts.
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+  /facts/{fact_id}:
+    get:
+      summary: Returns a fact by id.
+      parameters:
+        - in: path
+          name: fact_id
+          required: true
+          type: string
+          minimum: 1
+        - in: query
+          name: lang
+          required: true
+          type: string
+          minimum: 1
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
