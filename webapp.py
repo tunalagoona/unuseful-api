@@ -1,35 +1,44 @@
 import json
 import os
 from contextlib import closing
-from typing import List
 import logging
 
-from flask import Flask, request
+from flask import Flask, request, g
+from flask_cors import CORS
+from flask_httpauth import HTTPBasicAuth
 from googletrans import Translator
 
 from database import DB
 
+
+auth = HTTPBasicAuth()
+
 app = Flask(__name__)
-app.config.from_mapping(
-    DATABASE=os.path.join(app.instance_path, 'RandomFacts.db'),
-)
+app.config.from_mapping(DATABASE=os.path.join(app.instance_path, 'RandomFacts.db'),)
+app.config['CORS_HEADERS'] = 'Content-Type'
+
+cors = CORS(app)
+
 logger = logging.getLogger()
 
 
 @app.route("/status", methods=['GET'])
+@auth.login_required
 def status() -> str:
-    return str(get_status())
+    return json.dumps(get_status())
 
 
 @app.route("/facts", methods=['GET'])
+@auth.login_required
 def facts() -> str:
     with closing(DB()) as db:
         with db:
-            fact_ids: List[str] = db.get_ids()
-    return f"All the facts received: \n {fact_ids}"
+            fact_ids = json.dumps(db.get_ids())
+    return fact_ids
 
 
 @app.route("/facts/<fact_id>", methods=['GET'])
+@auth.login_required
 def fact(fact_id) -> str:
     if fact_id:
         with closing(DB()) as db:
@@ -58,11 +67,21 @@ def fact(fact_id) -> str:
 def get_status() -> dict:
     with closing(DB()) as db:
         with db:
-            rows_quantity = db.count_all_rows()
             rows_quantity_unique = db.count_unique_rows()
-            status = db.check_status()
+            status, rows_quantity = db.check_status()
 
     st = {"status": status, "facts": {}}
     st["facts"]["total"] = rows_quantity
     st["facts"]["unique"] = rows_quantity_unique
     return st
+
+
+@auth.verify_password
+def verify_password(username, password) -> bool:
+    # Using hardcoded user/pass because of time limitations
+    check_user = 'admin'
+    check_password = 'QWxhZGRpb'
+    if username != check_user or password != check_password:
+        return False
+    g.user = check_user
+    return True
