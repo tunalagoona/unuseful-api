@@ -1,4 +1,3 @@
-import json
 import sqlite3
 import logging
 from typing import List
@@ -36,17 +35,18 @@ class DB:
         )
         curs.execute(
             '''
-                CREATE TABLE IF NOT EXISTS finished_insert (
+                CREATE TABLE IF NOT EXISTS write_status (
                     id INTEGER PRIMARY KEY,
-                    flag TEXT
+                    flag TEXT,
+                    count INTEGER
                 );
             '''
         )
         curs.execute(
             '''
-                INSERT INTO finished_insert (id, flag)
-                VALUES (1, "FALSE")
-                ON CONFLICT(id) DO UPDATE SET flag = "FALSE";
+                INSERT INTO write_status (id, flag, count)
+                VALUES (1, "LOADING", 0)
+                ON CONFLICT(id) DO UPDATE SET flag = "LOADING", count = 0;
             '''
         )
 
@@ -68,15 +68,6 @@ class DB:
                 logger.error(err)
                 self.update_flag_to_error()
 
-    def count_all_rows(self) -> int:
-        curs = self.conn.cursor()
-        curs.execute(
-            '''
-                SELECT COUNT(*) FROM random_facts;
-            '''
-        )
-        return int(curs.fetchone())
-
     def count_unique_rows(self) -> int:
         curs = self.conn.cursor()
         curs.execute(
@@ -84,14 +75,15 @@ class DB:
                 SELECT COUNT(DISTINCT id) FROM random_facts;
             '''
         )
-        return int(curs.fetchone())
+        res, *_ = curs.fetchone()
+        return int(res)
 
     def update_flag_to_finished(self):
         curs = self.conn.cursor()
         curs.execute(
             '''
-                UPDATE finished_insert 
-                SET flag = "TRUE"
+                UPDATE write_status 
+                SET flag = "COMPLETED"
                 WHERE id = 1;
             '''
         )
@@ -100,21 +92,22 @@ class DB:
         curs = self.conn.cursor()
         curs.execute(
             '''
-                UPDATE finished_insert 
+                UPDATE write_status 
                 SET flag = "ERROR"
                 WHERE id = 1;
             '''
         )
 
-    def check_status(self) -> str:
+    def check_status(self):
         curs = self.conn.cursor()
         curs.execute(
             '''
-                SELECT flag FROM finished_insert
+                SELECT flag, count FROM write_status
                 WHERE id = 1;
             '''
         )
-        return curs.fetchone()
+        res = curs.fetchall()
+        return res[0]
 
     def get_ids(self) -> List[str]:
         curs = self.conn.cursor()
@@ -124,8 +117,7 @@ class DB:
             '''
         )
         res = curs.fetchall()
-        for i in range(len(res)):
-            res[i] = res[i][0]
+        res = [x[0] for x in res]
         return res
 
     def get_fact_by_id(self, fact_id) -> dict:
@@ -138,6 +130,16 @@ class DB:
         )
         res = UselessFact(*curs.fetchone())
         return res._asdict()
+
+    def update_counter(self, counter):
+        curs = self.conn.cursor()
+        curs.execute(
+            '''
+                UPDATE write_status 
+                SET count = ?
+                WHERE id = 1;
+            ''', (counter,)
+        )
 
     def close(self) -> None:
         self.conn.close()
